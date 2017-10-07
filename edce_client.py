@@ -1,7 +1,8 @@
 import sys
+
 if sys.version_info.major < 3:
-	print("You need to use Python 3.x, e.g. python3 <filename>")
-	exit()
+    print("You need to use Python 3.x, e.g. python3 <filename>")
+    exit()
 
 import configparser
 import edce.query
@@ -19,30 +20,32 @@ edce.eddn.testSchema = False
 edce.eddn.schemaVersion = 3
 
 try:
-	res = edce.query.performQuery()
-		
-	data = edce.util.edict(res)
-	edce.util.writeJSONLog(data.commander.name,data.lastSystem.name,data)
-	
-	station = ""
-	if data.commander.docked:
-		station = "/" + data.lastStarport.name
-	print("CMDR:\t" + data.commander.name)
-	print("System:\t" + data.lastSystem.name + station)
+    profile, market = edce.query.performQuery()
 
-	if "ship" in data:
-		print("Ship:\t" + data.ship.name)
-	
-	if edce.config.getString('preferences','enable_eddn').lower().find('y') >= 0:
-		if data.commander.docked:
-			print("Attempting to post market data to EDDN, this may take a minute...")
-			edce.eddn.postMarketData(data)
-			print("Done.")
-	
+    data = edce.util.edict(profile)
+    market_data = edce.util.edict(market)
+    data.lastStarport.commodities = market_data.commodities
+    edce.util.writeJSONLog(data.commander.name, data.lastSystem.name, data)
+
+    station = ""
+    if data.commander.docked:
+        station = "/" + data.lastStarport.name
+    print("CMDR:\t" + data.commander.name)
+    print("System:\t" + data.lastSystem.name + station)
+
+    if "ship" in data:
+        print("Ship:\t" + data.ship.name)
+
+    if edce.config.getString('preferences', 'enable_eddn').lower().find('y') >= 0:
+        if data.commander.docked:
+            print("Attempting to post market data to EDDN, this may take a minute...")
+            edce.eddn.postMarketData(data)
+            print("Done.")
+
 except edce.error.Error as e:
-	print("EDCE: " + e.message)
+    print("EDCE: " + e.message)
 except:
-	print("Unexpected error:", sys.exc_info()[0])
-	raise
+    print("Unexpected error:", sys.exc_info()[0])
+    raise
 
 
